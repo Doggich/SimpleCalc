@@ -3,19 +3,20 @@
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
+#include <errno.h>
 
-int pow_number(int number, int grade) {
-    int temp_number = 1;
+long double pow_number(long double number, int grade) {
+    long double temp_number = 1;
     for (int i = 0; i < grade; i++) {
         temp_number *= number;
     }
     return temp_number;
 }
 
-float cosine(float x) {
-    float radians = x * M_PI / 180;
-    float sum_ = 0;
-    float term = 1;
+long double cosine(long double x) {
+    long double  radians = x * M_PI / 180;
+    long double  sum_ = 0;
+    long double  term = 1;
     int n = 0;
 
     while (fabs(term) > 1e-6) {
@@ -27,10 +28,10 @@ float cosine(float x) {
     return sum_;
 }
 
-float sine(float x) {
-    float radians = x * M_PI / 180;
-    float sum_ = 0;
-    float term = radians;
+long double  sine(long double  x) {
+    long double  radians = x * M_PI / 180;
+    long double  sum_ = 0;
+    long double  term = radians;
     int n = 1;
 
     while (fabs(term) > 1e-6) {
@@ -42,11 +43,11 @@ float sine(float x) {
     return sum_;
 }
 
-float tangence(float x) {
+long double  tangence(long double  x) {
     return sine(x) / cosine(x);
 }
 
-float cotangence(float x) {
+long double  cotangence(long double  x) {
     return cosine(x) / sine(x);
 }
 
@@ -61,69 +62,78 @@ int gcd(int numberA, int numberB) {
     return numberA;
 }
 
+long double parse_number(const char *str) {
+    if (strcmp(str, "pi") == 0) {
+        return M_PI;
+    } else if (strcmp(str, "e") == 0) {
+        return M_E;
+    } else {
+        char *endptr;
+        errno = 0;
+        long double result = strtold(str, &endptr);
+        if (errno != 0 || *endptr != '\0') {
+            fprintf(stderr, "Error: Invalid number '%s'\n", str);
+            exit(1);
+        }
+        return result;
+    }
+}
+
+void print_help(const char *program_name) {
+    printf("Operations: add, sub, mul, div, pow, cos, sin, tg, ctg, gcd.\n");
+    printf("Syntax: %s <operation> <number1> <number2>\n", program_name);
+    printf("Special values: 'pi' for π, 'e' for e\n");
+}
+
 int main(int argc, char *argv[]) {
     if (argc == 2 && strcmp(argv[1], "help") == 0) {
-        printf("Operations: add, sub, mul, div, pow, cos, sin, tg, ctg, gcd.\nSyntax: %s <operation> <number1> <number2>\n", argv[0]);
+        print_help(argv[0]);
         return 0;
     }
+
     if (argc != 4) {
-        printf("Usage: %s <operation> <number1> <number2>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <operation> <number1> <number2>\n", argv[0]);
         return 1;
     }
 
-    char *operation = argv[1];
-    float number1, number2;
+    const char *operation = argv[1];
+    long double number1 = parse_number(argv[2]);
+    long double number2 = parse_number(argv[3]);
 
-    if (strcmp(argv[2], "pi") == 0) {
-        number1 = M_PI;
-    }
-    else if (strcmp(argv[2], "e") == 0)
-    {
-       number1 = M_E;
-    }
-    else {
-        number1 = atof(argv[2]);
-    }
-
-    if (strcmp(argv[3], "pi") == 0) {
-        number2 = M_PI;
-    }
-    else if (strcmp(argv[3], "e") == 0) 
-    {
-       number2 = M_E;
-    }
-    else {
-        number2 = atof(argv[3]);
-    }
+    long double result;
+    int int_result;
 
     if (strcmp(operation, "add") == 0) {
-        printf("%f\n", number1 + number2);
+        result = number1 + number2;
     } else if (strcmp(operation, "sub") == 0) {
-        printf("%f\n", number1 - number2);
+        result = number1 - number2;
     } else if (strcmp(operation, "mul") == 0) {
-        printf("%f\n", number1 * number2);
+        result = number1 * number2;
     } else if (strcmp(operation, "div") == 0) {
         if (number2 == 0) {
-            printf("Division by zero\n");
+            fprintf(stderr, "Error: Division by zero\n");
             return 1;
         }
-        printf("%f\n", number1 / number2);
+        result = number1 / number2;
     } else if (strcmp(operation, "pow") == 0) {
-        printf("%d\n", pow_number((int)number1, (int)number2));
+        result = pow_number(number1, (int)number2);
     } else if (strcmp(operation, "cos") == 0) {
-        printf("%f\n", cosine(number1));
+        result = cosine(number1);
     } else if (strcmp(operation, "sin") == 0) {
-        printf("%f\n", sine(number1));
+        result = sine(number1);
     } else if (strcmp(operation, "tg") == 0) {
-        printf("%f\n", tangence(number1));
+        result = tangence(number1);
     } else if (strcmp(operation, "ctg") == 0) {
-        printf("%f\n", cotangence(number1));
+        result = cotangence(number1);
     } else if (strcmp(operation, "gcd") == 0) {
-        printf("%d\n", gcd((int)number1, (int)number2));
+        int_result = gcd((int)number1, (int)number2);
+        printf("%d\n", int_result);
+        return 0;
     } else {
-        printf("Unknown operation: %s\n", operation);
+        fprintf(stderr, "Error: Unknown operation '%s'\n", operation);
         return 1;
     }
 
+    printf("%.10Lf\n", result);
     return 0;
 }
